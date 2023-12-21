@@ -15,8 +15,7 @@ class Caltech101_Classifier(L.LightningModule):
         self.mlp = nn.Sequential(
             nn.Linear(embed_dim, mlp_dim),
             nn.ReLU(),
-            nn.Linear(mlp_dim, num_classes),
-            nn.Softmax(dim=1)
+            nn.Linear(mlp_dim, num_classes)
         )
         self.lr = lr
 
