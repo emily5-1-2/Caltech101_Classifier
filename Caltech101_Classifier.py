@@ -34,8 +34,8 @@ class Caltech101_Classifier(L.LightningModule):
         preds = torch.argmax(x, dim=1)
         acc = accuracy(preds, y)
 
-        self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("train_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("train_loss", loss)
+        self.log("train_acc", acc)
 
         return loss
     
@@ -46,8 +46,16 @@ class Caltech101_Classifier(L.LightningModule):
         preds = torch.argmax(x, dim=1)
         acc = accuracy(preds, y)
 
-        self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("val_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("val_loss", loss)
+        self.log("val_acc", acc)
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        x = self(x)
+        preds = torch.argmax(x, dim=1)
+        acc = accuracy(preds, y)
+
+        self.log("test_acc", acc)
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
