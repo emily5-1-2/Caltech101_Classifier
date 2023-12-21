@@ -10,6 +10,7 @@ class Caltech101_Classifier(L.LightningModule):
     def __init__(self, CLIP_model, embed_dim=512, mlp_dim=200, num_classes=101, lr=1e-3):
         super().__init__()
         self.embed_dim = embed_dim
+        self.num_classes = num_classes
         self.CLIP_model = CLIP_model
         self.mlp = nn.Sequential(
             nn.Linear(embed_dim, mlp_dim),
@@ -53,8 +54,7 @@ class Caltech101_Classifier(L.LightningModule):
         x, y = batch
         x = self(x)
         preds = torch.argmax(x, dim=1)
-        acc = accuracy(preds, y)
-
+        acc = accuracy(preds, y, task="multiclass", num_classes=self.num_classes)
         self.log("test_acc", acc)
 
     def configure_optimizers(self):
