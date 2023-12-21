@@ -33,7 +33,7 @@ class Caltech101_Classifier(L.LightningModule):
         x = self(x)
         loss = nn.functional.cross_entropy(x, y)
         preds = torch.argmax(x, dim=1)
-        acc = accuracy(preds, y)
+        acc = accuracy(preds, y, task="multiclass", num_classes=self.num_classes)
 
         self.log("train_loss", loss)
         self.log("train_acc", acc)
@@ -45,7 +45,7 @@ class Caltech101_Classifier(L.LightningModule):
         x = self(x)
         loss = nn.functional.cross_entropy(x, y)
         preds = torch.argmax(x, dim=1)
-        acc = accuracy(preds, y)
+        acc = accuracy(preds, y, task="multiclass", num_classes=self.num_classes)
 
         self.log("val_loss", loss)
         self.log("val_acc", acc)
