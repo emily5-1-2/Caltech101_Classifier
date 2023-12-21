@@ -29,7 +29,7 @@ class Caltech101_Classifier(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        x = self.forward(x)
+        x = self(x)
         loss = nn.functional.cross_entropy(x, y)
         preds = torch.argmax(x, dim=1)
         acc = accuracy(preds, y)
@@ -38,6 +38,16 @@ class Caltech101_Classifier(L.LightningModule):
         self.log("train_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss
+    
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        x = self(x)
+        loss = nn.functional.cross_entropy(x, y)
+        preds = torch.argmax(x, dim=1)
+        acc = accuracy(preds, y)
+
+        self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("val_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
