@@ -21,7 +21,7 @@ class Caltech101_Classifier(L.LightningModule):
 
     def forward(self,x):
         #Embed the images through CLIP
-        x = self.CLIP_model.encode_image(x)
+        x = self.CLIP_model.encode_image(x).float()
         x = x.reshape(-1, self.embed_dim)
         #Fully connected layers for classification
         x = self.mlp(x)
@@ -30,22 +30,24 @@ class Caltech101_Classifier(L.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         x = self(x)
+        #Compute cross entropy loss
         loss = nn.functional.cross_entropy(x, y)
+        #Compute accuracy
         preds = torch.argmax(x, dim=1)
         acc = accuracy(preds, y, task="multiclass", num_classes=self.num_classes)
-
+        #Log training loss and accuracy
         self.log("train_loss", loss)
         self.log("train_acc", acc)
 
         return loss
-    
+
     def validation_step(self, batch, batch_idx):
         x, y = batch
         x = self(x)
         loss = nn.functional.cross_entropy(x, y)
         preds = torch.argmax(x, dim=1)
         acc = accuracy(preds, y, task="multiclass", num_classes=self.num_classes)
-
+        #Log validation loss and accuracy
         self.log("val_loss", loss)
         self.log("val_acc", acc)
 
@@ -54,6 +56,7 @@ class Caltech101_Classifier(L.LightningModule):
         x = self(x)
         preds = torch.argmax(x, dim=1)
         acc = accuracy(preds, y, task="multiclass", num_classes=self.num_classes)
+        #Log testing accuracy
         self.log("test_acc", acc)
 
     def configure_optimizers(self):
