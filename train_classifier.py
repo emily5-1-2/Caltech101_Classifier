@@ -6,7 +6,8 @@ from pytorch_lightning.loggers import WandbLogger
 from Caltech101_Classifier import Caltech101_Classifier
 from sklearn.model_selection import train_test_split
 import clip
-
+import wandb
+    
 device = "cuda" if torch.cuda.is_available() else "cpu"
 CLIP_model, CLIP_preprocess = clip.load("ViT-B/32", device=device)
 
@@ -15,21 +16,34 @@ for param in CLIP_model.parameters():
     param.requires_grad = False
 
 #Download Caltech101 and transform using the preprocess function of CLIP
-dataset = datasets.Caltech101(root="/Users/emilygu/Desktop", transform=CLIP_preprocess, download=True)
+dataset = datasets.Caltech101(root="/content/drive/MyDrive", transform=CLIP_preprocess, download=True)
 
 #Split dataset into training and validation sets
-train_dset, test_dset = train_test_split(dataset, train_size=0.8)
-train_dset, val_dset = train_test_split(train_dset, train_size=0.9)
+train_dset, val_dset = train_test_split(dataset, train_size=0.85)
 
+#Start a new background process to log data to a run
+wandb.init(project='Caltech101',
+    config={
+        "model_name": "Caltech101_Classifier",
+        "batch_size": 64,
+        "mlp_dim": 200,
+        "learning_rate": 1e-3,
+    })
+
+#Create dataloaders
 train_dataloader = DataLoader(train_dset, batch_size=64, shuffle=True)
 val_dataloader = DataLoader(val_dset, batch_size=64, shuffle=True)
-test_dataloader = DataLoader(test_dset, batch_size=64, shuffle=True)
 
-wandb_logger = WandbLogger(project="Caltech101_Classifier", log_model="all")
+#Set up wandb logger
+name = "Experiment: layer_size={mlp_dim}, lr={lr}, batch={batch_size}"
+wandb_logger = WandbLogger(project="Caltech101", name=name.format(mlp_dim=200, lr=1e-3, batch_size=64), log_model="all")
 
-model = Caltech101_Classifier(CLIP_model=CLIP_model, embed_dim=512, mlp_dim=200, num_classes=101)
+#Create model based on the provided hyperparameters
+model = Caltech101_Classifier(CLIP_model=CLIP_model, mlp_dim=200, lr=1e-3)
 model = model.to(device)
 
-trainer = L.Trainer(limit_train_batches=50, max_epochs=1, default_root_dir="/Users/emilygu/Desktop/", logger=wandb_logger)
+#Train model for 10 epochs
+trainer = L.Trainer(max_epochs=10, logger=wandb_logger)
 trainer.fit(model=model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
-trainer.test(model=model, dataloaders=test_dataloader)
+
+wandb.finish()
